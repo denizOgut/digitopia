@@ -1,0 +1,65 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: user-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**
+
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - JwtAuthenticationFilter
+
+
+        - id: organization-service
+          uri: lb://organization-service
+          predicates:
+            - Path=/api/organizations/**
+          filters:
+            - JwtAuthenticationFilter
+
+
+        - id: invitation-service
+          uri: lb://invitation-service
+          predicates:
+            - Path=/api/invitations/**
+          filters:
+            - JwtAuthenticationFilter
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:digitopia-secret-key-for-jwt-token-min-32-characters-required}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /
+      path-mapping:
+        health: healtz
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.digitopia.gateway: DEBUG
