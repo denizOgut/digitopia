@@ -7,9 +7,12 @@ public final class StringUtils {
     private StringUtils() {}
 
     /**
-     * Normalize text to lowercase ASCII-only alphanumeric
-     * Used for: Full Name, Organization Name (for searching)
-     * Example: "Şirket Adı 123" -> "sirket adi 123"
+     * Normalizes text to lowercase, ASCII-only alphanumeric format.
+     * Converts Turkish/special characters to English equivalents and removes diacritics.
+     * Used for creating searchable normalized database fields.
+     *
+     * @param input text to normalize
+     * @return normalized lowercase alphanumeric string, or empty if input is null/blank
      */
     public static String normalizeToAscii(String input) {
         if (input == null || input.isBlank()) {
@@ -37,9 +40,10 @@ public final class StringUtils {
     }
 
     /**
-     * Sanitize free text fields (like invitation messages)
-     * Removes HTML tags and prevents XSS attacks
-     * Example: "<script>alert('xss')</script>" -> ""
+     * Sanitizes user input by removing HTML tags to prevent XSS attacks.
+     *
+     * @param text free text input (e.g., invitation messages)
+     * @return sanitized text without HTML tags, or empty if input is null/blank
      */
     public static String sanitize(String text) {
         if (text == null || text.isBlank()) {
@@ -52,8 +56,10 @@ public final class StringUtils {
     }
 
     /**
-     * Normalize email to lowercase (case-insensitive comparison)
-     * Example: "User@Example.COM" -> "user@example.com"
+     * Normalizes email to lowercase for case-insensitive comparison.
+     *
+     * @param email email address
+     * @return lowercase email, or empty if input is null/blank
      */
     public static String normalizeEmail(String email) {
         if (email == null || email.isBlank()) {

@@ -1,4 +1,4 @@
-package com.digitopia.common;
+package com.digitopia.common.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -7,9 +7,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.Components;
 
-/**
- * Base OpenAPI configuration
- */
+
 public abstract class BaseOpenApiConfig {
 
     protected OpenAPI createOpenAPI(String title, String version, String description) {

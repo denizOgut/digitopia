@@ -30,7 +30,6 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private UUID updatedBy;
 
-    // Getters & Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
