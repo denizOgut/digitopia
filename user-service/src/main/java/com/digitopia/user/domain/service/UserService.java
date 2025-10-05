@@ -207,5 +207,7 @@ public class UserService {
         user.setStatus(UserStatus.DELETED);
         user.setUpdatedBy(currentUserId);
         userRepository.save(user);
+
+        //TODO: send notification to organization
     }
 }

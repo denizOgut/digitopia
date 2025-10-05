@@ -12,9 +12,5 @@ public record OrganizationDTO(
     String contactEmail,
     Integer companySize,
     Integer yearFounded,
-    List<UUID> userIds,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt,
-    UUID createdBy,
-    UUID updatedBy
+    List<UUID> userIds
 ) {}
