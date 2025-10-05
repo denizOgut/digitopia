@@ -17,7 +17,6 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Common Library</name>
     <description>Shared entities, DTOs, events and utilities for Digitopia microservices</description>
 
     <properties>
