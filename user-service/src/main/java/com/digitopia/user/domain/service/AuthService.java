@@ -1,5 +1,6 @@
 package com.digitopia.user.domain.service;
 
+import com.digitopia.common.constants.AppConstants;
 import com.digitopia.common.dto.UserDTO;
 import com.digitopia.common.dto.request.CreateUserRequest;
 import com.digitopia.common.enums.Role;
@@ -18,12 +19,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.UUID;
 
 
 /**
- * Service for authentication operations (login, register).
- * Handles password hashing and JWT token generation.
+ * Service for authentication operations including user registration and login.
+ *
+ * <p>This service handles secure authentication workflows by managing password
+ * hashing with BCrypt and generating JWT tokens for stateless authentication.
+ * It enforces security best practices and validates user credentials before
+ * granting access.</p>
+ *
+ * <p>Key Responsibilities:</p>
+ * <ul>
+ *   <li>User registration with automatic password hashing</li>
+ *   <li>User authentication with credential validation</li>
+ *   <li>JWT token generation for authenticated sessions</li>
+ *   <li>Account status verification (active, deleted, deactivated)</li>
+ *   <li>Email uniqueness enforcement during registration</li>
+ *   <li>Input validation and sanitization</li>
+ * </ul>
+ *
+ *
  */
 @Service
 public class AuthService {
@@ -33,8 +49,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserEventPublisher eventPublisher;
-
-    private static final String SYSTEM_USER_ID = "e3400c7e-3e16-441a-abd2-cf6e78b034d8";
 
     public AuthService(
         UserRepository userRepository,
@@ -78,17 +92,15 @@ public class AuthService {
         user.setRole(Role.USER);
         user.setStatus(UserStatus.PENDING);
 
-        var systemUserId = UUID.fromString(SYSTEM_USER_ID);
-
-        user.setCreatedBy(systemUserId);
-        user.setUpdatedBy(systemUserId);
+        user.setCreatedBy(AppConstants.SYSTEM_USER_ID);
+        user.setUpdatedBy(AppConstants.SYSTEM_USER_ID);
 
         var saved = userRepository.save(user);
         var dto = userMapper.toDto(saved);
 
         var token = jwtTokenProvider.generateToken(saved.getId(), saved.getEmail(), saved.getRole());
 
-        eventPublisher.publishUserCreated(dto, systemUserId);
+        eventPublisher.publishUserCreated(dto, AppConstants.SYSTEM_USER_ID);
 
         return Map.of(
             "token", token,

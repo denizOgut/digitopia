@@ -27,7 +27,12 @@ import java.util.UUID;
 
 /**
  * Service for managing user operations.
- * Handles CRUD operations, validation, caching, and event publishing.
+ *
+ * <p>This service handles complete user lifecycle management including creation,
+ * retrieval, updates, deletion, and search operations. It integrates with Redis
+ * for caching frequently accessed user data and publishes events for inter-service
+ * communication.</p>
+ *
  */
 @Service
 public class UserService {
