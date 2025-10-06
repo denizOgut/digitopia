@@ -13,8 +13,11 @@ import com.digitopia.common.util.StringUtils;
 import com.digitopia.user.domain.entity.User;
 import com.digitopia.user.domain.repository.UserRepository;
 import com.digitopia.user.infrastructure.mapper.UserMapper;
+import com.digitopia.user.infrastructure.messaging.EventConsumer;
 import com.digitopia.user.infrastructure.messaging.UserEventPublisher;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -40,6 +43,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserEventPublisher eventPublisher;
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     public UserService(
         UserRepository userRepository,
@@ -198,6 +203,7 @@ public class UserService {
     /**
      * Soft-deletes a user by setting status to DELETED.
      * User record remains in database but is marked as deleted.
+     * Publishes UserDeletedEvent to remove user from all organizations.
      *
      * @param id user ID
      * @param currentUserId ID of user performing the deletion
@@ -209,10 +215,41 @@ public class UserService {
         var user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User " + id.toString()));
 
+        var organizationIds = user.getOrganizationIds();
+
         user.setStatus(UserStatus.DELETED);
         user.setUpdatedBy(currentUserId);
         userRepository.save(user);
 
-        //TODO: send notification to organization
+        if(!organizationIds.isEmpty())
+            eventPublisher.publishUserDeleted(id, organizationIds, currentUserId);
+    }
+
+    /**
+     * Removes organization from multiple users.
+     * Called when organization is deleted via event.
+     *
+     * @param organizationId organization ID to remove
+     * @param userIds list of user IDs to update
+     */
+    @Transactional
+    public void removeOrganizationFromUsers(UUID organizationId, List<UUID> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return;
+        }
+
+        for (UUID userId : userIds) {
+            try {
+                var user = userRepository.findById(userId);
+                if (user.isPresent()) {
+                    var u = user.get();
+                    u.getOrganizationIds().remove(organizationId);
+                    userRepository.save(u);
+                }
+            } catch (Exception e) {
+                log.error("Failed to remove organization {} from user {}",
+                    organizationId, userId, e);
+            }
+        }
     }
 }

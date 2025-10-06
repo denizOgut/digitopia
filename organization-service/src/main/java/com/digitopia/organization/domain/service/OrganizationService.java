@@ -1,5 +1,6 @@
 package com.digitopia.organization.domain.service;
 
+import com.digitopia.common.constants.AppConstants;
 import com.digitopia.common.dto.OrganizationDTO;
 import com.digitopia.common.dto.request.CreateOrganizationRequest;
 import com.digitopia.common.dto.request.SearchOrganizationRequest;
@@ -10,6 +11,9 @@ import com.digitopia.organization.domain.entity.Organization;
 import com.digitopia.organization.domain.repository.OrganizationRepository;
 import com.digitopia.organization.infrastructure.mapper.OrganizationMapper;
 import com.digitopia.organization.infrastructure.messaging.OrganizationEventPublisher;
+import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -30,6 +34,8 @@ public class OrganizationService {
     private final OrganizationRepository organizationRepository;
     private final OrganizationMapper organizationMapper;
     private final OrganizationEventPublisher eventPublisher;
+
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
 
     public OrganizationService(
         OrganizationRepository organizationRepository,
@@ -187,7 +193,8 @@ public class OrganizationService {
      *
      * <p>This is a physical delete operation, not a soft delete. The organization
      * record is permanently removed from the database. Both cache entries
-     * (by ID and by registry number) are evicted upon deletion.</p>
+     * (by ID and by registry number) are evicted upon deletion.
+     * send delete event to the related services</p>
      *
      * <p><strong>Warning:</strong> This operation cannot be undone. Ensure proper
      * authorization checks are performed before calling this method.</p>
@@ -198,12 +205,44 @@ public class OrganizationService {
     @Transactional
     @CacheEvict(value = {"orgById", "orgByRegistry"}, key = "#id")
     public void deleteOrganization(UUID id) {
-        if (!organizationRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Organization "+ id.toString());
-        }
+        var org = organizationRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Organization "+ id.toString()));
+
+        var deletedUserIds = new ArrayList<>(org.getUserIds());
+
+
         organizationRepository.deleteById(id);
 
-        //TODO: send notification for user
+
+        eventPublisher.publishOrganizationDeleted(id, deletedUserIds,
+            AppConstants.SYSTEM_USER_ID);
+    }
+
+    /**
+     * Removes user from multiple organizations.
+     * Called when user is deleted via event.
+     *
+     * @param userId user ID to remove
+     * @param organizationIds list of organization IDs to update
+     */
+    @Transactional
+    public void removeUserFromOrganizations(UUID userId, List<UUID> organizationIds) {
+        if (organizationIds == null || organizationIds.isEmpty()) {
+            return;
+        }
+
+        for (UUID orgId : organizationIds) {
+            try {
+                var org = organizationRepository.findById(orgId);
+                if (org.isPresent()) {
+                    var o = org.get();
+                    o.getUserIds().remove(userId);
+                    organizationRepository.save(o);
+                }
+            } catch (Exception e) {
+                log.error("Error removing user from organization", e);
+            }
+        }
     }
 }
 
