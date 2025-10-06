@@ -1,7 +1,6 @@
 package com.digitopia.user.infrastructure.messaging;
 
 import com.digitopia.common.dto.event.InvitationAcceptedEvent;
-import com.digitopia.common.dto.event.OrganizationDeletedEvent;
 import com.digitopia.user.domain.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,25 +30,6 @@ public class EventConsumer {
         } catch (Exception e) {
             log.error("Failed to add user {} to organization {}",
                 event.userId(), event.organizationId(), e);
-        }
-    }
-
-
-    @RabbitListener(queues = "organization.deleted.queue")
-    public void handleOrganizationDeleted(OrganizationDeletedEvent event) {
-        log.info("Received OrganizationDeletedEvent: orgId={}, deletedUserIds={}",
-            event.organizationId(), event.deletedUserIds());
-
-        try {
-            userService.removeOrganizationFromUsers(
-                event.organizationId(),
-                event.deletedUserIds()
-            );
-            log.info("Successfully removed organization {} from {} users",
-                event.organizationId(), event.deletedUserIds());
-        } catch (Exception e) {
-            log.error("Failed to remove organization {} from users",
-                event.organizationId(), e);
         }
     }
 }

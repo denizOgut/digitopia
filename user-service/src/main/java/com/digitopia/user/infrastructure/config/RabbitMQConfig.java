@@ -17,17 +17,9 @@ public class RabbitMQConfig {
     public static final String USER_CREATED_QUEUE = "user.created.queue";
     public static final String USER_CREATED_KEY = "user.created";
 
-    public static final String USER_DELETED_QUEUE = "user.deleted.queue";
-    public static final String USER_DELETED_KEY = "user.deleted";
-
     public static final String INVITATION_EXCHANGE = "digitopia.invitation.exchange";
     public static final String INVITATION_ACCEPTED_QUEUE = "invitation.accepted.queue";
     public static final String INVITATION_ACCEPTED_KEY = "invitation.accepted";
-
-
-    public static final String ORG_EXCHANGE = "digitopia.organization.exchange";
-    public static final String ORG_DELETED_QUEUE = "organization.deleted.queue";
-    public static final String ORG_DELETED_KEY = "organization.deleted";
 
     @Bean
     public TopicExchange userExchange() {
@@ -48,21 +40,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue userDeletedQueue() {
-        return new Queue(USER_DELETED_QUEUE, true);
-    }
-
-    @Bean
-    public Binding userDeletedBinding() {
-        return BindingBuilder
-            .bind(userDeletedQueue())
-            .to(userExchange())
-            .with(USER_DELETED_KEY);
-    }
-
-    @Bean
     public TopicExchange invitationExchange() {
         return new TopicExchange(INVITATION_EXCHANGE);
+    }
+
+    @Bean
+    public Queue invitationAcceptedConsumerQueue() {
+        return new Queue(INVITATION_ACCEPTED_QUEUE, true);
     }
 
     @Bean
@@ -74,34 +58,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue invitationAcceptedConsumerQueue() {
-        return new Queue(INVITATION_ACCEPTED_QUEUE, true);
-    }
-
-    @Bean
-    public TopicExchange organizationExchange() {
-        return new TopicExchange(ORG_EXCHANGE);
-    }
-
-    @Bean
-    public Queue organizationDeletedConsumerQueue() {
-        return new Queue(ORG_DELETED_QUEUE, true);
-    }
-
-    @Bean
-    public Binding organizationDeletedBinding() {
-        return BindingBuilder
-            .bind(organizationDeletedConsumerQueue())
-            .to(organizationExchange())
-            .with(ORG_DELETED_KEY);
-    }
-
-    @Bean
     public Jackson2JsonMessageConverter messageConverter() {
         ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            
+
         return new Jackson2JsonMessageConverter(mapper);
     }
 

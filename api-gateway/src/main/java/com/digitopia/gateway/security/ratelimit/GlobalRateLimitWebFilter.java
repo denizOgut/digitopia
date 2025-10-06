@@ -18,6 +18,14 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+ /**
+ * Global rate limiting filter using token bucket algorithm.
+ * Limits: 50 requests/minute per user or IP.
+
+ * @see io.github.bucket4j.Bucket
+ * @see org.springframework.web.server.WebFilter
+ */
 @Component
 public class GlobalRateLimitWebFilter implements WebFilter, Ordered {
 

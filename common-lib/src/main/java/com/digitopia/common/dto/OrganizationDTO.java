@@ -1,6 +1,6 @@
 package com.digitopia.common.dto;
 
-import java.time.LocalDateTime;
+import com.digitopia.common.enums.OrganizationStatus;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,5 +12,6 @@ public record OrganizationDTO(
     String contactEmail,
     Integer companySize,
     Integer yearFounded,
+    OrganizationStatus status,
     List<UUID> userIds
 ) {}

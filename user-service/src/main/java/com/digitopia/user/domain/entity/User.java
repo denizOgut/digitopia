@@ -72,7 +72,6 @@ public class User extends BaseEntity {
 
     /**
      * List of organization IDs this user belongs to.
-     * No foreign key - microservices architecture.
      * Actual organization data lives in organization-service.
      */
     @ElementCollection(fetch = FetchType.EAGER)

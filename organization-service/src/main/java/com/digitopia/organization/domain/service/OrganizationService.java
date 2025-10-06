@@ -4,6 +4,7 @@ import com.digitopia.common.constants.AppConstants;
 import com.digitopia.common.dto.OrganizationDTO;
 import com.digitopia.common.dto.request.CreateOrganizationRequest;
 import com.digitopia.common.dto.request.SearchOrganizationRequest;
+import com.digitopia.common.enums.OrganizationStatus;
 import com.digitopia.common.exception.DuplicateResourceException;
 import com.digitopia.common.exception.ResourceNotFoundException;
 import com.digitopia.common.util.StringUtils;
@@ -11,7 +12,6 @@ import com.digitopia.organization.domain.entity.Organization;
 import com.digitopia.organization.domain.repository.OrganizationRepository;
 import com.digitopia.organization.infrastructure.mapper.OrganizationMapper;
 import com.digitopia.organization.infrastructure.messaging.OrganizationEventPublisher;
-import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
@@ -73,6 +73,7 @@ public class OrganizationService {
         org.setContactEmail(StringUtils.normalizeEmail(request.contactEmail()));
         org.setCompanySize(request.companySize());
         org.setYearFounded(request.yearFounded());
+        org.setStatus(OrganizationStatus.ACTIVE);
         org.setCreatedBy(currentUserId);
         org.setUpdatedBy(currentUserId);
 
@@ -189,60 +190,24 @@ public class OrganizationService {
     }
 
     /**
-     * Permanently deletes an organization from the system.
-     *
-     * <p>This is a physical delete operation, not a soft delete. The organization
-     * record is permanently removed from the database. Both cache entries
-     * (by ID and by registry number) are evicted upon deletion.
-     * send delete event to the related services</p>
-     *
-     * <p><strong>Warning:</strong> This operation cannot be undone. Ensure proper
-     * authorization checks are performed before calling this method.</p>
+     * Soft-deletes an organization by setting status to DELETED.
+     * Organization record remains in database but is marked as deleted..
      *
      * @param id the unique identifier of the organization to delete
+     * @param currentUserId the user performing the deletion
      * @throws ResourceNotFoundException if no organization exists with the given ID
      */
     @Transactional
-    @CacheEvict(value = {"orgById", "orgByRegistry"}, key = "#id")
-    public void deleteOrganization(UUID id) {
+    @CacheEvict(value = {"orgById", "orgByRegistry"}, allEntries = true)
+    public void deleteOrganization(UUID id, UUID currentUserId) {
         var org = organizationRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Organization "+ id.toString()));
 
-        var deletedUserIds = new ArrayList<>(org.getUserIds());
+        org.setStatus(OrganizationStatus.DELETED);
+        org.setUpdatedBy(currentUserId == null ? AppConstants.SYSTEM_USER_ID : currentUserId);
+        organizationRepository.save(org);
 
-
-        organizationRepository.deleteById(id);
-
-
-        eventPublisher.publishOrganizationDeleted(id, deletedUserIds,
-            AppConstants.SYSTEM_USER_ID);
-    }
-
-    /**
-     * Removes user from multiple organizations.
-     * Called when user is deleted via event.
-     *
-     * @param userId user ID to remove
-     * @param organizationIds list of organization IDs to update
-     */
-    @Transactional
-    public void removeUserFromOrganizations(UUID userId, List<UUID> organizationIds) {
-        if (organizationIds == null || organizationIds.isEmpty()) {
-            return;
-        }
-
-        for (UUID orgId : organizationIds) {
-            try {
-                var org = organizationRepository.findById(orgId);
-                if (org.isPresent()) {
-                    var o = org.get();
-                    o.getUserIds().remove(userId);
-                    organizationRepository.save(o);
-                }
-            } catch (Exception e) {
-                log.error("Error removing user from organization", e);
-            }
-        }
+        log.info("Organization {} soft-deleted by user {}", id, currentUserId);
     }
 }
 

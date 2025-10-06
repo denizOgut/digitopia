@@ -18,6 +18,4 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
 
     Page<User> findByNormalizedNameContaining(String normalizedName, Pageable pageable);
-
-    Optional<User> findByIdAndStatus(UUID id, UserStatus status);
 }

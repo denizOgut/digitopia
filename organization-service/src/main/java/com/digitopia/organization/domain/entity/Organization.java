@@ -1,6 +1,7 @@
 package com.digitopia.organization.domain.entity;
 
 import com.digitopia.common.entity.BaseEntity;
+import com.digitopia.common.enums.OrganizationStatus;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,15 @@ public class Organization extends BaseEntity {
     private String contactEmail;
 
     /**
+     * Organization status.
+     * ACTIVE: Organization is operational
+     * DELETED: Soft-deleted
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrganizationStatus status = OrganizationStatus.ACTIVE;
+
+    /**
      * Number of employees.
      */
     @Column(nullable = false, name = "company_size")
@@ -87,4 +97,7 @@ public class Organization extends BaseEntity {
 
     public List<UUID> getUserIds() { return userIds; }
     public void setUserIds(List<UUID> userIds) { this.userIds = userIds; }
+
+    public OrganizationStatus getStatus() { return status; }
+    public void setStatus(OrganizationStatus status) { this.status = status; }
 }

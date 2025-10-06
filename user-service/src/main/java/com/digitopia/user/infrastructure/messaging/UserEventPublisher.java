@@ -43,20 +43,4 @@ public class UserEventPublisher {
 
         log.info("Published UserCreatedEvent for user: {}", user.email());
     }
-
-    public void publishUserDeleted(UUID userId, List<UUID> organizationIds, UUID triggeredBy) {
-        var event = UserDeletedEvent.create(userId, organizationIds, triggeredBy);
-
-        try {
-            rabbitTemplate.convertAndSend(
-                RabbitMQConfig.USER_EXCHANGE,
-                RabbitMQConfig.USER_DELETED_KEY,
-                event
-            );
-            log.info("Published UserDeletedEvent for user: {}, affecting {} organizations",
-                userId, organizationIds.size());
-        } catch (Exception e) {
-            log.error("Failed to publish UserDeletedEvent for user: {}", userId, e);
-        }
-    }
 }

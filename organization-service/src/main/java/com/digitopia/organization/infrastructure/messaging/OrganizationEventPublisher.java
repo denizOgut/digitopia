@@ -44,25 +44,5 @@ public class OrganizationEventPublisher {
             log.error("Failed to publish OrganizationCreatedEvent for: {}", org.organizationName(), e);
         }
     }
-
-    public void publishOrganizationDeleted(UUID organizationId, List<UUID> affectedUserIds, UUID triggeredBy) {
-        var event = OrganizationDeletedEvent.create(
-            organizationId,
-            affectedUserIds,
-            triggeredBy
-        );
-
-        try {
-            rabbitTemplate.convertAndSend(
-                RabbitMQConfig.ORG_EXCHANGE,
-                RabbitMQConfig.ORG_DELETED_KEY,
-                event
-            );
-            log.info("Published OrganizationDeletedEvent for org: {}, affecting {} users",
-                organizationId, affectedUserIds.size());
-        } catch (Exception e) {
-            log.error("Failed to publish OrganizationDeletedEvent for org: {}", organizationId, e);
-        }
-    }
 }
 

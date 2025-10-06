@@ -2,6 +2,7 @@ package com.digitopia.organization.domain.service;
 
 import com.digitopia.common.dto.OrganizationDTO;
 import com.digitopia.common.dto.request.CreateOrganizationRequest;
+import com.digitopia.common.enums.OrganizationStatus;
 import com.digitopia.common.exception.DuplicateResourceException;
 import com.digitopia.common.exception.ResourceNotFoundException;
 import com.digitopia.organization.domain.entity.Organization;
@@ -116,28 +117,40 @@ class OrganizationServiceTest {
     }
 
     @Test
-    @DisplayName("Should delete organization successfully")
-    void shouldDeleteOrganization() {
+    @DisplayName("Should soft-delete organization successfully")
+    void shouldSoftDeleteOrganizationSuccessfully() {
+        // Given
         var orgId = UUID.randomUUID();
+        var currentUserId = UUID.randomUUID();
+        var org = new Organization();
+        org.setId(orgId);
+        org.setStatus(OrganizationStatus.ACTIVE);
 
-        when(organizationRepository.existsById(orgId)).thenReturn(true);
+        when(organizationRepository.findById(orgId)).thenReturn(Optional.of(org));
 
-        organizationService.deleteOrganization(orgId);
+        // When
+        organizationService.deleteOrganization(orgId, currentUserId);
 
-        verify(organizationRepository).deleteById(orgId);
+        // Then
+        assertThat(org.getStatus()).isEqualTo(OrganizationStatus.DELETED);
+        assertThat(org.getUpdatedBy()).isEqualTo(currentUserId);
+
+        verify(organizationRepository).save(org);
     }
 
     @Test
-    @DisplayName("Should throw exception when deleting non-existent organization")
-    void shouldThrowExceptionWhenDeletingNonExistentOrganization() {
+    @DisplayName("Should throw exception when soft-deleting non-existent organization")
+    void shouldThrowExceptionWhenSoftDeletingNonExistentOrganization() {
+        // Given
         var orgId = UUID.randomUUID();
+        when(organizationRepository.findById(orgId)).thenReturn(Optional.empty());
 
-        when(organizationRepository.existsById(orgId)).thenReturn(false);
+        // When / Then
+        assertThatThrownBy(() -> organizationService.deleteOrganization(orgId, UUID.randomUUID()))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining(orgId.toString());
 
-        assertThatThrownBy(() -> organizationService.deleteOrganization(orgId))
-            .isInstanceOf(ResourceNotFoundException.class);
-
-        verify(organizationRepository, never()).deleteById(any());
+        verify(organizationRepository, never()).save(any());
     }
 
     @Test
@@ -190,6 +203,7 @@ class OrganizationServiceTest {
             "contact@techcorp.com",
             100,
             2020,
+            OrganizationStatus.ACTIVE,
             List.of()
         );
     }

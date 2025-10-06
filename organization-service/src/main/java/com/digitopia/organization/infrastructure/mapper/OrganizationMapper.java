@@ -20,6 +20,7 @@ public class OrganizationMapper implements EntityMapper<Organization, Organizati
             entity.getContactEmail(),
             entity.getCompanySize(),
             entity.getYearFounded(),
+            entity.getStatus(),
             entity.getUserIds()
         );
     }
@@ -36,6 +37,7 @@ public class OrganizationMapper implements EntityMapper<Organization, Organizati
         org.setContactEmail(dto.contactEmail());
         org.setCompanySize(dto.companySize());
         org.setYearFounded(dto.yearFounded());
+        org.setStatus(dto.status());
         org.setUserIds(dto.userIds());
 
         return org;
@@ -50,5 +52,6 @@ public class OrganizationMapper implements EntityMapper<Organization, Organizati
         if (dto.contactEmail() != null) entity.setContactEmail(dto.contactEmail());
         if (dto.companySize() != null) entity.setCompanySize(dto.companySize());
         if (dto.yearFounded() != null) entity.setYearFounded(dto.yearFounded());
+        if (dto.status() != null) entity.setStatus(dto.status());
     }
 }

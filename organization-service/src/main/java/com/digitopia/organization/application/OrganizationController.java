@@ -4,6 +4,9 @@ import com.digitopia.common.constants.AppConstants;
 import com.digitopia.common.dto.OrganizationDTO;
 import com.digitopia.common.dto.request.CreateOrganizationRequest;
 import com.digitopia.common.dto.request.SearchOrganizationRequest;
+import com.digitopia.common.enums.Role;
+import com.digitopia.common.exception.UnauthorizedException;
+import com.digitopia.common.util.AuthorizationUtil;
 import com.digitopia.organization.domain.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -69,9 +72,16 @@ public class OrganizationController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete organization")
-    public ResponseEntity<Void> deleteOrganization(@PathVariable UUID id) {
-        organizationService.deleteOrganization(id);
+    @Operation(summary = "Delete organization (soft delete)")
+    public ResponseEntity<Void> deleteOrganization(
+        @PathVariable UUID id,
+        @RequestHeader(AppConstants.HEADER_USER_ID) UUID currentUserId,
+        @RequestHeader(AppConstants.HEADER_USER_ROLE) String roleHeader
+    ) {
+        var role = AuthorizationUtil.parseRole(roleHeader);
+        AuthorizationUtil.checkDeletePermission(role);
+
+        organizationService.deleteOrganization(id, currentUserId);
         return ResponseEntity.noContent().build();
     }
 }

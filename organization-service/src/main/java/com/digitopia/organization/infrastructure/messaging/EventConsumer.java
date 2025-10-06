@@ -36,21 +36,4 @@ public class EventConsumer {
                 event.userId(), event.organizationId(), e);
         }
     }
-
-    @RabbitListener(queues = "user.deleted.queue")
-    public void handleUserDeleted(UserDeletedEvent event) {
-        log.info("Received UserDeletedEvent: userId={}, affectedOrgs={}",
-            event.userId(), event.organizationIds().size());
-
-        try {
-            organizationService.removeUserFromOrganizations(
-                event.userId(),
-                event.organizationIds()
-            );
-            log.info("Successfully removed user {} from {} organizations",
-                event.userId(), event.organizationIds().size());
-        } catch (Exception e) {
-            log.error("Failed to remove user {} from organizations", event.userId(), e);
-        }
-    }
 }

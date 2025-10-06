@@ -108,7 +108,7 @@ public class UserService {
     @Cacheable(value = "userById", key = "#id")
     public UserDTO getUserById(UUID id) {
         var user = userRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User" + id.toString()));
+            .orElseThrow(() -> new ResourceNotFoundException("User " + id.toString()));
         return userMapper.toDto(user);
     }
 
@@ -155,10 +155,10 @@ public class UserService {
      * @throws ResourceNotFoundException if user not found
      */
     @Transactional
-    @CacheEvict(value = {"userById", "userByEmail"}, key = "#id")
+    @CacheEvict(value = {"userById", "userByEmail"}, allEntries = true)
     public UserDTO updateStatus(UUID id, UpdateUserStatusRequest request, UUID currentUserId) {
         var user = userRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User" + id.toString()));
+            .orElseThrow(() -> new ResourceNotFoundException("User " + id.toString()));
 
         user.setStatus(request.status());
         user.setUpdatedBy(currentUserId);
@@ -203,7 +203,6 @@ public class UserService {
     /**
      * Soft-deletes a user by setting status to DELETED.
      * User record remains in database but is marked as deleted.
-     * Publishes UserDeletedEvent to remove user from all organizations.
      *
      * @param id user ID
      * @param currentUserId ID of user performing the deletion
@@ -215,41 +214,10 @@ public class UserService {
         var user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User " + id.toString()));
 
-        var organizationIds = user.getOrganizationIds();
-
         user.setStatus(UserStatus.DELETED);
         user.setUpdatedBy(currentUserId);
         userRepository.save(user);
 
-        if(!organizationIds.isEmpty())
-            eventPublisher.publishUserDeleted(id, organizationIds, currentUserId);
-    }
-
-    /**
-     * Removes organization from multiple users.
-     * Called when organization is deleted via event.
-     *
-     * @param organizationId organization ID to remove
-     * @param userIds list of user IDs to update
-     */
-    @Transactional
-    public void removeOrganizationFromUsers(UUID organizationId, List<UUID> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
-            return;
-        }
-
-        for (UUID userId : userIds) {
-            try {
-                var user = userRepository.findById(userId);
-                if (user.isPresent()) {
-                    var u = user.get();
-                    u.getOrganizationIds().remove(organizationId);
-                    userRepository.save(u);
-                }
-            } catch (Exception e) {
-                log.error("Failed to remove organization {} from user {}",
-                    organizationId, userId, e);
-            }
-        }
+        log.info("User {} soft-deleted by user {}", id, currentUserId);
     }
 }
