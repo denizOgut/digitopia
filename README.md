@@ -75,6 +75,14 @@ cd invitation-service && mvn spring-boot:run &
 - Comprehensive unit tests
     
 - ``OpenAPI`` documentation
+
+
+## AI-generated
+
+- Unit tests especially for throwing exceptions
+- Javadocs
+- StringUtil sanitize method
+- .dockerignore files
     
 
 ## TODO
@@ -82,3 +90,5 @@ cd invitation-service && mvn spring-boot:run &
 - Deploy to Cloud (AWS, Azure, or GCP using Docker and Kubernetes)
     
 - Add Mail Service  for  notification emails
+
+- Add monitoring(Elasticsearch, Kibana, and Prometheus)
